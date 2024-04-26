@@ -38,7 +38,7 @@ async def welcome_message(_, m: Message) -> Message:
 async def get_temp_mail(_, m: Message) -> Message:
     random_mail = get_random_mail(m.from_user.id)
     return await m.reply(
-        "This is your random e-mail: {}\n\nIt's only available for 1 hour".format(random_mail),
+        "This is your random e-mail: {}\n\nIt's only available for 1 hour\nI will send you new recived emails automatically".format(random_mail),
         quote=True
     )
 
