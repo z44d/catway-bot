@@ -2,7 +2,7 @@ import asyncio
 import logging
 
 from pyrogram import Client, idle, filters
-from pyrogram.types import Message
+from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.enums import ParseMode
 
 from config import API_HASH, API_ID, BOT_TOKEN
@@ -39,7 +39,14 @@ async def get_temp_mail(_, m: Message) -> Message:
     random_mail = get_random_mail(m.from_user.id)
     return await m.reply(
         "This is your random e-mail: {}\n\nIt's only available for 1 hour\nI will send you new recived emails automatically".format(random_mail),
-        quote=True
+        quote=True,
+        reply_markup=InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton("Check Inbox manually", url="https://email.catdns.in/{}".format(random_mail.split("@catdns.in")[0]))
+                ]
+            ]
+        )
     )
 
 async def main():

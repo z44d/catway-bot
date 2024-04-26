@@ -79,5 +79,6 @@ async def emails_task(app: Client):
                     if (_.data.content or _.data.html) not in i["data"]:
                         await process_notif(obj=_, user=i["user"], mail=i["mail"], app=app)
                         i["data"].append(_.data.content or _.data.html)
-            except:
+            except Exception as e:
+                print(e)
                 continue
