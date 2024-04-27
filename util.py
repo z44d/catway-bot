@@ -66,7 +66,7 @@ async def process_notif(obj: Mail, user: int, mail: str, app: Client) -> "Messag
 
 async def emails_task(app: Client):
     print("TASK STARTED")
-    while not await asyncio.sleep(0.5):
+    while not await asyncio.sleep(2.5):
         for i in emails_db:
             try:
                 if i["expire_date"] <= datetime.now():
@@ -77,9 +77,9 @@ async def emails_task(app: Client):
 
                 if inbox.mail_data is not None:
                     for _ in inbox.mail_data:
-                        if hash(_.data.content) not in i["data"]:
+                        if hash(_.data.content or _.data.html) not in i["data"]:
                             await process_notif(obj=_, user=i["user"], mail=i["mail"], app=app)
-                            i["data"].append(hash(_.data.content))
+                            i["data"].append(hash(_.data.content or _.data.html))
 
             except Exception as e:
                 print("Error: ", str(e))
