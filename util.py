@@ -77,10 +77,10 @@ async def emails_task(app: Client):
 
                 if inbox.mail_data is not None:
                     for _ in inbox.mail_data:
-                        if hash(_.data.content or _.data.html) not in i["data"]:
+                        if (_.data.content or _.data.html) not in i["data"]:
                             await process_notif(obj=_, user=i["user"], mail=i["mail"], app=app)
-                            i["data"].append(hash(_.data.content or _.data.html))
+                            i["data"].append(_.data.content or _.data.html)
 
             except Exception as e:
-                print("Error: ", str(e))
+                print(e)
                 continue
