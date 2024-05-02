@@ -3,8 +3,9 @@ import string
 import asyncio
 
 from datetime import datetime, timedelta
-from catdns.asyncio import get_inbox
-from catdns.types import Mail
+from catway.asyncio import CatMail
+from catway.types import Mail
+from catway.utils import convert_to_str
 from pyrogram import Client
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
 from pyrogram.errors import FloodWait
@@ -16,21 +17,23 @@ def random_string(length):
     return ''.join(random.choice(letters) for _ in range(length))
 
 class TempMail(TypedDict):
-    mail: str
-    user: int
-    expire_date: datetime
-    data: list
+    mail: "str"
+    user: "int"
+    expire_date: "datetime"
+    data: "list"
+    cat_mail: "CatMail"
 
 emails_db: List["TempMail"] = []
 
 def get_random_mail(user_id: int) -> str:
-    random_mail = random_string(random.randint(7, 12)) + "@catdns.in"
+    random_mail = random_string(random.randint(7, 12)) + "@catway.org"
     emails_db.append(
         {
             "mail": random_mail,
             "user": user_id,
             "expire_date": datetime.now() + timedelta(hours=1),
-            "data": []
+            "data": [],
+            "cat_mail": CatMail(random_mail)
         }
     )
     return random_mail
@@ -41,12 +44,12 @@ async def process_notif(obj: Mail, user: int, mail: str, app: Client) -> "Messag
         "- Date: {}\n"
         "- Subject: {}"
     ).format(
-        obj.sent_from.user, obj.sent_from.email, mail, obj.date, obj.subject
+        obj.sender_name, obj.sender_email, mail, convert_to_str(obj.created_at), obj.subject
     )
     reply_markup = InlineKeyboardMarkup(
         [
             [
-                InlineKeyboardButton("Show HTML Content", url="https://email.catdns.in/{}".format(mail.split("@catdns.in")[0]))
+                InlineKeyboardButton("Show HTML Content", url=obj.view_link)
             ]
         ]
     )
@@ -73,14 +76,12 @@ async def emails_task(app: Client):
                     emails_db.remove(i)
                     continue
 
-                inbox = await get_inbox(i["mail"])
-
-                if inbox.mail_data is not None:
-                    for _ in inbox.mail_data:
-                        if hash(_.data.content or _.data.html) not in i["data"]:
-                            await process_notif(obj=_, user=i["user"], mail=i["mail"], app=app)
-                            i["data"].append(hash(_.data.content or _.data.html))
-
+                async for mail in i["cat_mail"].get_inboxes():
+                    if mail.id not in i["data"]:
+                        await process_notif(
+                            mail, i["user"], i["mail"], app
+                        )
+                        i["data"].append(mail.id)
             except Exception as e:
-                print("Error: ", str(e))
+                print(e)
                 continue
